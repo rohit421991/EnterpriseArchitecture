@@ -14,24 +14,21 @@ namespace Enterprise.Manager
 {
     public class CustomersRepository : ICustomersRepository
     {
-        EnterpriseContext context = new EnterpriseContext();
-
-        //private readonly IMongoRepository<Customer> _repository;
-
-        //public CustomersRepository(IMongoRepository<Customer> repository)
-        //{
-        //    _repository = repository;
-        //}
+        private readonly EnterpriseContext _context;
+        public CustomersRepository(EnterpriseContext context)
+        {
+            _context = context;
+        }
         public Task<IEnumerable<Customer>> BrowseAsync(BrowseCustomers id)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Customer> GetAsync(Guid id)
+        public async Task<Customer> GetAsync(Guid id)
         {
             try
             {
-                var data = context.Customers.Where(u => u.Id == id)
+                var data = await _context.Customers.Where(u => u.Id == id)
                     .Select(x => new Customer
                     {
                         Id = x.Id,
@@ -41,12 +38,8 @@ namespace Enterprise.Manager
                     }).FirstOrDefaultAsync();
 
                 return data;
-
             }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            catch (Exception) { throw; }
         }
     }
 }
