@@ -19,5 +19,9 @@ namespace Enterprise.Web.Controllers
         [HttpGet]
         public async Task<IEnumerable<CustomerDto>> Get([FromQuery] BrowseCustomers query)
             => await _customersService.BrowseAsync(query);
+
+        [HttpGet("{guid}")]
+        public async Task<CustomerDto> GetCustomers(Guid guid)
+            => await _customersService.GetAsync(guid);
     }
 }
