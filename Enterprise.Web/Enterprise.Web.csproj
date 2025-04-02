@@ -11,4 +11,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Enterprise.Contract\Enterprise.Contract.csproj" />
+    <ProjectReference Include="..\Enterprise.Manager\Enterprise.Manager.csproj" />
+  </ItemGroup>
+
 </Project>
