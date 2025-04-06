@@ -2,6 +2,7 @@
 using Enterprise.Data.Entities;
 using Enterprise.Data.Queries;
 using Enterprise.Manager.EnterpriseDB;
+using FirebirdSql.Data.FirebirdClient;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

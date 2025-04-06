@@ -26,7 +26,6 @@ namespace Enterprise.Manager
                 LastName = customer.LastName
             };
         }
-
         public async Task<IEnumerable<CustomerDto>> BrowseAsync(BrowseCustomers query)
         {
             var pagedResult = await _customersRepository.BrowseAsync(query);

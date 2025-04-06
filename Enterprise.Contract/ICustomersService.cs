@@ -7,7 +7,6 @@ namespace Enterprise.Contract
     public interface ICustomersService
     {
         Task<CustomerDto> GetAsync(Guid id);
-
         Task<IEnumerable<CustomerDto>> BrowseAsync(BrowseCustomers query);
     }
 }

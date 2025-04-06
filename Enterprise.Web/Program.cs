@@ -15,13 +15,19 @@ builder.Services.AddControllers();
 
 // Configure PostgreSQL database
 builder.Services.AddDbContext<EnterpriseContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSqlConnection")));
+
+// Configure FirebirdSQL database
+builder.Services.AddDbContext<EnterpriseFirebirdContext>(options =>
+    options.UseFirebird(builder.Configuration.GetConnectionString("FirebirdSqlConnection")));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddScoped<ICustomersRepository, CustomersRepository>();
 builder.Services.AddScoped<ICustomersService, CustomersService>();
+builder.Services.AddScoped<IEmployeesRepository, EmployeesRepository>();
+builder.Services.AddScoped<IEmployeesService, EmployeesService>();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
