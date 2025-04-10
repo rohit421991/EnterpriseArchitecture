@@ -2,7 +2,9 @@
 using Enterprise.Data.Dtos;
 using Enterprise.Data.Entities;
 using Enterprise.Manager.EnterpriseDB;
+using FirebirdSql.Data.FirebirdClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,65 +16,108 @@ namespace Enterprise.Manager
 {
     public class EmployeesRepository : IEmployeesRepository
     {
-        private readonly EnterpriseFirebirdContext _contextFireBird;
-        public EmployeesRepository(EnterpriseFirebirdContext enterpriseFirebirdContext)
+        private readonly string _sqlConnectionString;
+        public EmployeesRepository(IConfiguration configuration)
         {
-            _contextFireBird = enterpriseFirebirdContext;
+            _sqlConnectionString = configuration.GetConnectionString("FirebirdSqlConnection")
+                ?? throw new InvalidOperationException("Firebird Sql connection string is missing.");
         }
         public async Task<List<Employees>> GetAllEmployeesAsync()
         {
-            return await _contextFireBird.Employees
-                    .Select(x => new Employees
-                    {
-                        Id = x.Id,
-                        FirstName = x.FirstName,
-                        LastName = x.LastName,
-                        Email = x.Email,
-                        Mobile = x.Mobile,
-                        Address = x.Address
-                    }).ToListAsync();
-        }
+            var employees = new List<Employees>();
 
+            using (var connection = new FbConnection(_sqlConnectionString))
+            {
+                await connection.OpenAsync();
+
+                var query = "SELECT \"Id\", \"FIRSTNAME\", \"LASTNAME\", \"EMAIL\", \"MOBILE\", \"ADDRESS\" FROM EMPLOYEES";
+                using (var command = new FbCommand(query, connection))
+                {
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            employees.Add(new Employees
+                            {
+                                Id = reader.GetInt32(0),
+                                FirstName = reader.GetString(1),
+                                LastName = reader.GetString(2),
+                                Email = reader.GetString(3),
+                                Mobile = reader.GetString(4),
+                                Address = reader.GetString(5)
+                            });
+                        }
+                    }
+                }
+            }
+
+            return employees;
+        }
         public async Task<Employees> GetEmployeeAsync(int id)
         {
-            try
+            Employees? employee = null;
+
+            using (var connection = new FbConnection(_sqlConnectionString))
             {
-                var data = await _contextFireBird.Employees.Where(u => u.Id == id)
-                    .Select(x => new Employees
+                await connection.OpenAsync();
+
+                var query = "SELECT \"Id\", \"FIRSTNAME\", \"LASTNAME\", \"EMAIL\", \"MOBILE\", \"ADDRESS\" FROM EMPLOYEES WHERE \"Id\" = @Id";
+                using (var command = new FbCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", id);
+
+                    using (var reader = await command.ExecuteReaderAsync())
                     {
-                        Id = x.Id,
-                        FirstName = x.FirstName,
-                        LastName = x.LastName,
-                        Email = x.Email,
-                        Mobile = x.Mobile,
-                        Address = x.Address
-                    }).FirstOrDefaultAsync();
+                        if (await reader.ReadAsync())
+                        {
+                            employee = new Employees
+                            {
+                                Id = reader.GetInt32(0),
+                                FirstName = reader.GetString(1),
+                                LastName = reader.GetString(2),
+                                Email = reader.GetString(3),
+                                Mobile = reader.GetString(4),
+                                Address = reader.GetString(5)
+                            };
+                        }
+                    }
+                }
+            }
 
-                return data;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            return employee ?? throw new KeyNotFoundException("Employee not found.");
         }
-
         public async Task<bool> SaveEmployeeAsync(Employees modal)
         {
-            Enterprise.Manager.EnterpriseDB.Employees employees = new Enterprise.Manager.EnterpriseDB.Employees();
+            using (var connection = new FbConnection(_sqlConnectionString))
+            {
+                await connection.OpenAsync();
 
-            int newId = (_contextFireBird.Employees.Max(e => (int?)e.Id) ?? 0) + 1;
+                // Get the current maximum Id
+                var getMaxIdQuery = "SELECT COALESCE(MAX(\"Id\"), 0) + 1 FROM EMPLOYEES";
+                int newId;
 
-            employees.Id = newId;
-            employees.FirstName = modal.FirstName;
-            employees.LastName = modal.LastName;
-            employees.Email = modal.Email;
-            employees.Mobile = modal.Mobile;
-            employees.Address = modal.Address;
+                using (var getMaxIdCommand = new FbCommand(getMaxIdQuery, connection))
+                {
+                    newId = Convert.ToInt32(await getMaxIdCommand.ExecuteScalarAsync());
+                }
 
-            _contextFireBird.Employees.Add(employees);
-            await _contextFireBird.SaveChangesAsync();
+                var query = @"
+                    INSERT INTO EMPLOYEES (""Id"", ""FIRSTNAME"", ""LASTNAME"", ""EMAIL"", ""MOBILE"", ""ADDRESS"")
+                    VALUES (@Id, @FirstName, @LastName, @Email, @Mobile, @Address)";
 
-            return true;
+                using (var command = new FbCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", newId);
+                    command.Parameters.AddWithValue("@FirstName", modal.FirstName);
+                    command.Parameters.AddWithValue("@LastName", modal.LastName);
+                    command.Parameters.AddWithValue("@Email", modal.Email);
+                    command.Parameters.AddWithValue("@Mobile", modal.Mobile);
+                    command.Parameters.AddWithValue("@Address", modal.Address);
+
+                    var rowsAffected = await command.ExecuteNonQueryAsync();
+                    return rowsAffected > 0;
+                }
+            }
         }
     }
 }

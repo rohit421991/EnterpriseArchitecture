@@ -1,11 +1,6 @@
 ﻿using Enterprise.Contract;
 using Enterprise.Data.Dtos;
 using Enterprise.Data.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Enterprise.Manager
 {
