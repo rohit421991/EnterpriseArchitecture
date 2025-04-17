@@ -1,15 +1,7 @@
 ﻿using Enterprise.Contract;
-using Enterprise.Data.Dtos;
-using Enterprise.Data.Entities;
-using Enterprise.Manager.EnterpriseDB;
 using FirebirdSql.Data.FirebirdClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Employees = Enterprise.Data.Entities.Employees;
 
 namespace Enterprise.Manager
@@ -84,7 +76,7 @@ namespace Enterprise.Manager
                 }
             }
 
-            return employee ?? throw new KeyNotFoundException("Employee not found.");
+            return employee;
         }
         public async Task<bool> SaveEmployeeAsync(Employees modal)
         {

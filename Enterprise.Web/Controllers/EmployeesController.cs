@@ -1,8 +1,6 @@
 ﻿using Enterprise.Contract;
 using Enterprise.Data.Dtos;
-using Enterprise.Data.Entities;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Enterprise.Web.Controllers
