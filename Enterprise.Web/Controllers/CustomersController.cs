@@ -1,10 +1,12 @@
 ﻿using Enterprise.Contract;
 using Enterprise.Data.Dtos;
 using Enterprise.Data.Queries;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Enterprise.Web.Controllers
 {
+    [Authorize(Roles = "User")]
     [Route("api/[controller]")]
     [ApiController]
     public class CustomersController : ControllerBase

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Enterprise.Web.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class EmployeesController : ControllerBase
@@ -18,7 +18,7 @@ namespace Enterprise.Web.Controllers
             _logger = logger;
         }
 
-        [Authorize(Roles = "Admin")]
+        
         [HttpGet]
         public async Task<List<EmployeeDto>> GetAllEmployees()
         {
@@ -29,12 +29,10 @@ namespace Enterprise.Web.Controllers
             return data;
         }
 
-        [Authorize(Roles = "User")]
         [HttpGet("{id}")]
         public async Task<EmployeeDto> GetEmployee(int id)
            => await _employeesService.GetEmployeeAsync(id);
 
-        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<bool> SaveEmployee([FromBody] EmployeeDto employees)
           => await _employeesService.SaveEmployeeAsync(employees);

@@ -1,8 +1,11 @@
 using Enterprise.Contract;
 using Enterprise.Manager;
+using Enterprise.Manager.Auth;
 using Enterprise.Manager.EnterpriseDB;
-using Enterprise.Web.Models;
+using Enterprise.Manager.User;
+using Enterprise.Web.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
@@ -26,27 +29,29 @@ builder.Host.UseSerilog();
 // Add services to the container.
 builder.Services.AddControllers();
 
-// Configure PostgreSQL database
-builder.Services.AddDbContext<EnterpriseContext>(options =>
+// Configure PostgreSQL database for EnterpriseDbContext
+builder.Services.AddDbContext<EnterpriseDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("PostgreSqlConnection")));
 
-// Configure FirebirdSQL database
-builder.Services.AddDbContext<EnterpriseFirebirdContext>(options =>
-    options.UseFirebird(configuration.GetConnectionString("FirebirdSqlConnection")));
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddScoped<ICustomersRepository, CustomersRepository>();
-builder.Services.AddScoped<ICustomersService, CustomersService>();
-builder.Services.AddScoped<IEmployeesRepository, EmployeesRepository>();
-builder.Services.AddScoped<IEmployeesService, EmployeesService>();
+// Add Identity services
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<EnterpriseDbContext>()
+    .AddDefaultTokenProviders();
 builder.Services.AddSingleton(new TokenService(
     secretKey: configuration["JWT:SecretKey"] ?? throw new InvalidOperationException("JWT:SecretKey configuration is missing"),
     issuer: configuration["JWT:ValidIssuer"] ?? throw new InvalidOperationException("JWT:ValidIssuer configuration is missing"),
     audience: configuration["JWT:ValidAudience"] ?? throw new InvalidOperationException("JWT:ValidAudience configuration is missing")
 ));
+
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddScoped<ICustomersRepository, CustomersRepository>();
+builder.Services.AddScoped<ICustomersService, CustomersService>();
+builder.Services.AddScoped<IEmployeesRepository, EmployeesRepository>();
+builder.Services.AddScoped<IEmployeesService, EmployeesService>();
+builder.Services.AddScoped<IUserAccountRepository, UserAccountRepository>();
+builder.Services.AddScoped<IUserAccountService, UserAccountService>();
+
 builder.Services.AddSwaggerGen();
 
 // Adding Authentication
@@ -107,6 +112,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddAuthorization();
+//builder.Services.AddAuthentication().AddCookie(IdentityConstants.ApplicationScheme).AddBearerToken(IdentityConstants.BearerScheme);
 
 // Define CORS policy
 builder.Services.AddCors(options =>
@@ -130,6 +136,9 @@ if (app.Environment.IsDevelopment())
 //app.UseMiddleware<CustomAuthenticationMiddleware>();
 //app.UseMiddleware<CustomAuthorizationMiddleware>();
 
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<LoggingMiddleware>();
+
 app.UseHttpsRedirection();
 app.UseCors("_myAllowSpecificOrigins");
 
@@ -137,5 +146,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+//app.MapIdentityApi<IdentityUser>();
 
 app.Run();

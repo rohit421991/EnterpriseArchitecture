@@ -15,8 +15,8 @@ namespace Enterprise.Manager
 {
     public class CustomersRepository : ICustomersRepository
     {
-        private readonly EnterpriseContext _context;
-        public CustomersRepository(EnterpriseContext context)
+        private readonly EnterpriseDbContext _context;
+        public CustomersRepository(EnterpriseDbContext context)
         {
             _context = context;
         }
